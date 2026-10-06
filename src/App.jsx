@@ -23,6 +23,11 @@ function App() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
 
+  const [nome, setNome] = useState('')
+  const [email, setEmail] = useState('')
+  const [empresa, setEmpresa] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
 
   // Métodos HTTP
   // GET -> Busca informação
@@ -63,14 +68,106 @@ function App() {
 
     buscaUsuarios()
   }, [])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+      console.log(nome, email)
+  
+      if (!nome || !email) {
+        alert('Por favor, preencha pelo menos o Nome e E-mail.')
+        return
+      }    
+
+      setEnviando(true)
+
+      const novoUsuarioDado = {
+        name: nome,
+        email: email,
+        company: { name: empresa || 'N/A'}
+      }
+
+      console.log(novoUsuarioDado)
+
+      try {
+        // Utilizando o método POST para enviar o novo usuário para a nossa API.
+        const resposta = await fetch('https://jsonplaceholder.typicode.com/users', {
+          // Método da requisição
+          method: 'POST',
+          // Cabeçalho
+          headers: {
+            // Tipo de conteúdo
+            'Content-Type': 'aplication/json'
+          },
+          // Corpo da requisição com os dados a serem enviados
+          body: JSON.stringify(novoUsuarioDado)
+        })
+
+        // Verifica se algo deu errado e lança uma exceção
+        if (!resposta.ok) throw new Error('Erro ao cadastrar usuário')
+
+          const usuarioCriado = await resposta.json()
+
+          // Atualiza o estado local adicioanando o novo usuário no topo da lista
+
+          setUsuarios([novoUsuarioDado, ...usuarios])
+
+          // Limpa os estados
+          setNome('')   
+          setEmail('')   
+          setEmpresa('')   
+      } catch (e) {
+        alert('Erro: $(e.message')
+      } finally {
+        setEnviando(false)
+      }
+  }
 // Precisa ficar sozinho para não ter dempendências
 
 
 
   if (carregando) return <div className='status'>Carregando Usuários... Aguarde.</div>
-  if (erro) return <div className='status erro'>Erro: {erro}</div>
+  if (erro) return <div className='status-erro'>Erro: {erro}</div>
   return (
     <div className='container'>
+      <h1>Gerenciador de Usuários</h1>
+
+      {/* Formulário de criação */}
+      <form className='form-card' onSubmit={handleSubmit}>
+        <h2>Cadastrar Novo Usuário</h2>
+
+      {/* Campo de nome */}
+        <div className="form-grop">
+          <label htmlFor="nome">Nome: </label>
+          <input type="text" id='nome' 
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder='Ex: Maria Silva'/>
+        </div>
+
+      {/* Campo de email */}
+        <div className="form-grop">
+          <label htmlFor="email">Email: </label>
+          <input type="text" id='email' 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder='Ex: mariasilva@exemplo.com'/>
+        </div>
+
+      {/* Campo de empresa */}
+        <div className="form-grop">
+          <label htmlFor="empresa">Empresa: </label>
+          <input type="text" id='empresa' 
+            value={empresa}
+            onChange={(e) => setEmpresa(e.target.value)}
+            placeholder='Ex: Tech Fulanos'/>
+        </div>
+
+        <button type='submit' disabled={enviando}>
+          {/* Se o estado enviando for true, o texto apareceçá como "Enviando...", se for falso, apareceçá como "Cadastrar Usuário"*/}
+          {enviando ? 'Enviando...' : 'Cadastrar Usuário'}
+        </button>
+      </form>
       
       {/* {Rederizando os usuários} */}
       <h2>Listas de Usuários ({usuarios.length})</h2>
